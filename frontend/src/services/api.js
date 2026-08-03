@@ -2,7 +2,6 @@ import axios from 'axios'
 import { getToken, clearAuth } from '../utils/storage'
 
 export const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || '/api'
-console.log(API_BASE_URL)
 
 /**
  * Shared axios instance. Attaches the Bearer token from storage on every
