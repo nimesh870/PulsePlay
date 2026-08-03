@@ -1,16 +1,76 @@
-# React + Vite
+# PulsePlay — Frontend UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A dark, production-ready UI system for a Spotify-like music streaming app.
+Presentational components only — no routing, state management or API logic.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **React 19** (functional components)
+- **Tailwind CSS v4** (utility-first, custom theme in `src/index.css`)
+- **React Icons** (Remix icon set)
+- **React Hook Form** (forms UI, validation rules)
+- **Headless UI** (accessible profile menu)
 
-## React Compiler
+## Install & Run
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+npm run dev          # start dev server
+npm run build        # production build
+npm run lint         # eslint
+```
 
-## Expanding the ESLint configuration
+Dependencies used by this UI:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm i react-icons react-hook-form @headlessui/react
+npm i -D tailwindcss @tailwindcss/vite
+```
+
+Tailwind is wired through the Vite plugin in `vite.config.js`. The design
+tokens (colors, fonts, animations) live in `src/index.css` via Tailwind v4's
+`@theme` — there is no `tailwind.config.js` by design.
+
+## Folder Structure
+
+```
+src/
+├── App.jsx                    # shell composition (home screen, loading state)
+├── index.css                  # theme tokens, base styles, shared component classes
+├── config/
+│   ├── nav.js                 # navigation structure (sidebar + mobile tabs)
+│   └── constants.js           # genres, file accept rules
+├── utils/
+│   ├── cx.js                  # className merge helper
+│   └── format.js              # duration / count formatting
+├── components/
+│   ├── ui/                    # primitives: Button, IconButton, PlayButton,
+│   │                          # LikeButton, Avatar, Logo, Skeleton, Slider,
+│   │                          # EmptyState, ViewToggle, CoverPlaceholder, ...
+│   ├── cards/                 # CardShell, MusicCard, AlbumCard, ArtistCard, TrackRow
+│   ├── sections/              # SectionHeader, HeroBanner, CollectionHeader
+│   ├── layout/                # AppLayout, Sidebar, BottomTabNavigator, Header
+│   ├── player/                # MusicPlayer, MobilePlayer, PlayerControls,
+│   │                          # ProgressBar, VolumeControl
+│   └── forms/                 # FormField, Input, Select, Textarea, Checkbox,
+│                              # FileDropzone, CreateAlbumForm, UploadMusicForm,
+│                              # LoginForm, SignupForm, AuthLayout
+└── pages/                     # HomePage, AlbumPage, PlaylistPage, ArtistPage,
+                               # LoginPage, SignupPage
+```
+
+## Wiring It Up
+
+- Every component is data-driven through props; there is **no mock data, fake
+  API or hardcoded content** anywhere. Empty arrays render designed empty
+  states; `isLoading` renders matching skeleton patterns.
+- `AppLayout` accepts the shell chrome (sidebar/nav, header, player) and a
+  page as `children`. Feed it your own `track`, `volume`, `isPlaying`, etc.
+- Screens accept callbacks (`onPlay`, `onSelect`, `onSubmit`, `onFollow`, ...)
+  — connect them to your router / API layer.
+
+## Responsive Behavior
+
+- **Desktop (`lg`+):** sidebar navigation + sticky bottom music player.
+- **Tablet / Mobile:** hidden sidebar, compact player + fixed bottom tab bar.
+- Mobile-first breakpoints throughout; scrollable rows for horizontal sections.
