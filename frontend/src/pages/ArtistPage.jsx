@@ -1,3 +1,6 @@
+import { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { useParams, useNavigate } from 'react-router'
 import { RiShuffleLine, RiMore2Fill, RiUserStarLine } from 'react-icons/ri'
 import TrackRow from '../components/cards/TrackRow'
 import AlbumCard from '../components/cards/AlbumCard'
@@ -10,24 +13,36 @@ import PlayButton from '../components/ui/PlayButton'
 import IconButton from '../components/ui/IconButton'
 import Button from '../components/ui/Button'
 import { formatCount } from '../utils/format'
+import { fetchArtist } from '../store/slices/artistSlice'
+import {
+  playQueue,
+  playTrack,
+  setShuffle,
+} from '../store/slices/playerSlice'
 
 /**
- * Artist profile — banner, popular tracks and discography.
+ * Artist profile — banner, popular tracks and discography, derived from the
+ * catalog GETs since the backend exposes no artist-scoped endpoints.
  */
-export default function ArtistPage({
-  isLoading = false,
-  artist,
-  popularTracks = [],
-  albums = [],
-  following = false,
-  playingId,
-  onPlay,
-  onShuffle,
-  onFollow,
-  onMore,
-  onPlayTrack,
-  onSelectAlbum,
-}) {
+export default function ArtistPage() {
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+  const { artistId } = useParams()
+  const { byId, status } = useSelector((state) => state.artist)
+  const { current: currentTrack } = useSelector((state) => state.player)
+
+  useEffect(() => {
+    if (artistId) dispatch(fetchArtist(artistId))
+  }, [artistId, dispatch])
+
+  const bundle = byId[artistId]
+  const artist = bundle?.artist
+  const popularTracks = bundle?.tracks ?? []
+  const albums = bundle?.albums ?? []
+  const isLoading = status === 'idle' || status === 'loading' || !bundle
+
+  const playAll = (index = 0) => dispatch(playQueue({ tracks: popularTracks, index }))
+
   return (
     <div className="space-y-10">
       {isLoading ? (
@@ -72,24 +87,27 @@ export default function ArtistPage({
                   {formatCount(artist?.followers)} followers
                 </p>
                 <div className="mt-6 flex items-center justify-center gap-3 sm:justify-start">
-                  <PlayButton size="lg" onClick={onPlay} />
+                  <PlayButton size="lg" onClick={() => playAll(0)} />
                   <IconButton
                     icon={RiShuffleLine}
                     label="Shuffle"
                     size="lg"
-                    onClick={onShuffle}
+                    onClick={() => {
+                      dispatch(setShuffle(true))
+                      playAll(Math.floor(Math.random() * popularTracks.length))
+                    }}
                   />
                   <Button
-                    variant={following ? 'soft' : 'primary'}
-                    onClick={onFollow}
+                    variant="soft"
+                    onClick={() => {}}
                   >
-                    {following ? 'Following' : 'Follow'}
+                    Follow
                   </Button>
                   <IconButton
                     icon={RiMore2Fill}
                     label="More options"
                     size="lg"
-                    onClick={onMore}
+                    onClick={() => {}}
                   />
                 </div>
               </div>
@@ -106,9 +124,9 @@ export default function ArtistPage({
                     key={track.id}
                     index={index}
                     track={track}
-                    playing={playingId === track.id}
-                    onPlay={() => onPlayTrack?.(track)}
-                    onSelect={() => onPlayTrack?.(track)}
+                    playing={currentTrack?.id === track.id}
+                    onPlay={() => dispatch(playTrack({ track, queue: popularTracks }))}
+                    onSelect={() => dispatch(playTrack({ track, queue: popularTracks }))}
                   />
                 ))
               ) : (
@@ -131,7 +149,7 @@ export default function ArtistPage({
                   <AlbumCard
                     key={album.id}
                     album={album}
-                    onSelect={() => onSelectAlbum?.(album)}
+                    onSelect={() => navigate(`/album/${album.id}`)}
                   />
                 ))}
               </div>

@@ -32,7 +32,7 @@ export default function AuthLayout({ children, title, subtitle, footer }) {
               Sound, <span className="text-gradient">pulsing</span> with you.
             </h2>
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-ink-300">
-              Upload your own music, curate playlists and discover artists — all
+              Upload your own music, discover artists and explore new sounds — all
               in one beautifully dark place.
             </p>
           </div>

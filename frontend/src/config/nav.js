@@ -3,7 +3,6 @@ import {
   RiSearchLine,
   RiPlayList2Line,
   RiHeart3Line,
-  RiAddLine,
   RiUpload2Line,
   RiAlbumLine,
   RiUserLine,
@@ -20,7 +19,6 @@ export const primaryNav = [
 ]
 
 export const createNav = [
-  { id: 'new-playlist', label: 'New Playlist', icon: RiAddLine },
   { id: 'liked-songs', label: 'Liked Songs', icon: RiHeart3Line },
   { id: 'upload', label: 'Upload Music', icon: RiUpload2Line },
   { id: 'create-album', label: 'Create Album', icon: RiAlbumLine },

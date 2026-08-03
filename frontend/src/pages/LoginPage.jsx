@@ -1,10 +1,31 @@
+import { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { useNavigate, useLocation } from 'react-router'
 import AuthLayout from '../components/forms/AuthLayout'
 import LoginForm from '../components/forms/LoginForm'
+import Alert from '../components/ui/Alert'
+import { login, clearError } from '../store/slices/authSlice'
 
-/**
- * Login screen — form UI only.
- */
-export default function LoginPage({ onSubmit, onSwitchMode }) {
+export default function LoginPage() {
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { status, error } = useSelector((state) => state.auth)
+  const from = location.state?.from ?? '/home'
+
+  useEffect(() => {
+    dispatch(clearError())
+  }, [dispatch])
+
+  const onSubmit = async (data) => {
+    const result = await dispatch(
+      login({ username: data.email, password: data.password }),
+    )
+    if (login.fulfilled.match(result)) {
+      navigate(from, { replace: true })
+    }
+  }
+
   return (
     <AuthLayout
       title="Welcome back"
@@ -14,7 +35,7 @@ export default function LoginPage({ onSubmit, onSwitchMode }) {
           New to PulsePlay?{' '}
           <button
             type="button"
-            onClick={onSwitchMode}
+            onClick={() => navigate('/signup')}
             className="focus-ring rounded font-semibold text-accent-400 transition-colors hover:text-accent-300"
           >
             Create an account
@@ -22,7 +43,8 @@ export default function LoginPage({ onSubmit, onSwitchMode }) {
         </>
       }
     >
-      <LoginForm onSubmit={onSubmit} />
+      {error && <Alert className="mb-5">{error}</Alert>}
+      <LoginForm onSubmit={status === 'loading' ? undefined : onSubmit} />
     </AuthLayout>
   )
 }

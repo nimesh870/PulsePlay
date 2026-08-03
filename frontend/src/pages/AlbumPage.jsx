@@ -1,4 +1,12 @@
-import { RiShuffleLine, RiMore2Fill, RiTimeLine, RiDiscLine } from 'react-icons/ri'
+import { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { useParams } from 'react-router'
+import {
+  RiShuffleLine,
+  RiMore2Fill,
+  RiTimeLine,
+  RiDiscLine,
+} from 'react-icons/ri'
 import CollectionHeader from '../components/sections/CollectionHeader'
 import TrackRow from '../components/cards/TrackRow'
 import EmptyState from '../components/ui/EmptyState'
@@ -7,22 +15,32 @@ import { SkeletonList } from '../components/ui/Skeletons'
 import PlayButton from '../components/ui/PlayButton'
 import IconButton from '../components/ui/IconButton'
 import LikeButton from '../components/ui/LikeButton'
+import { fetchAlbumById } from '../store/slices/albumSlice'
+import {
+  playQueue,
+  playTrack,
+  setShuffle,
+} from '../store/slices/playerSlice'
 
 /**
- * Album detail — hero header + full tracklist.
+ * Album detail — hero header + full tracklist, loaded from the backend.
  */
-export default function AlbumPage({
-  isLoading = false,
-  album,
-  tracks = [],
-  playingId,
-  onPlay,
-  onShuffle,
-  onLike,
-  onMore,
-  onPlayTrack,
-  onSelectTrack,
-}) {
+export default function AlbumPage() {
+  const dispatch = useDispatch()
+  const { albumId } = useParams()
+  const { current, status } = useSelector((state) => state.album)
+  const { current: currentTrack } = useSelector((state) => state.player)
+
+  useEffect(() => {
+    if (albumId) dispatch(fetchAlbumById(albumId))
+  }, [albumId, dispatch])
+
+  const tracks = current?.id === albumId ? current.tracks : []
+  const album = current?.id === albumId ? current.album : undefined
+  const isLoading = status === 'idle' || status === 'loading'
+
+  const playAll = (index = 0) => dispatch(playQueue({ tracks, index }))
+
   const totalSeconds = tracks.reduce((sum, track) => sum + (track.duration ?? 0), 0)
   const totalMinutes = Math.round(totalSeconds / 60)
 
@@ -51,19 +69,22 @@ export default function AlbumPage({
             meta={meta}
             actions={
               <>
-                <PlayButton size="lg" onClick={onPlay} />
+                <PlayButton size="lg" onClick={() => playAll(0)} />
                 <IconButton
                   icon={RiShuffleLine}
                   label="Shuffle"
                   size="lg"
-                  onClick={onShuffle}
+                  onClick={() => {
+                    dispatch(setShuffle(true))
+                    playAll(Math.floor(Math.random() * tracks.length))
+                  }}
                 />
-                <LikeButton liked={Boolean(album?.liked)} size="lg" onClick={onLike} />
+                <LikeButton liked={Boolean(album?.liked)} size="lg" onClick={() => {}} />
                 <IconButton
                   icon={RiMore2Fill}
                   label="More options"
                   size="lg"
-                  onClick={onMore}
+                  onClick={() => {}}
                 />
               </>
             }
@@ -85,11 +106,11 @@ export default function AlbumPage({
                     key={track.id}
                     index={index}
                     track={track}
-                    playing={playingId === track.id}
-                    onPlay={() => onPlayTrack?.(track)}
-                    onSelect={() => onSelectTrack?.(track)}
-                    onLike={() => onLike?.(track)}
-                    onMore={() => onMore?.(track)}
+                    playing={currentTrack?.id === track.id}
+                    onPlay={() => dispatch(playTrack({ track, queue: tracks }))}
+                    onSelect={() => dispatch(playTrack({ track, queue: tracks }))}
+                    onLike={() => {}}
+                    onMore={() => {}}
                   />
                 ))}
               </div>

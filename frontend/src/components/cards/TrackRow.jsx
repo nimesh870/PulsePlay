@@ -5,7 +5,7 @@ import LikeButton from '../ui/LikeButton'
 import Equalizer from '../ui/Equalizer'
 
 /**
- * Horizontal track row used in tracklists and playlists.
+ * Horizontal track row used in tracklists and albums.
  * The row index morphs into a play control on hover.
  * @param {object} props
  * @param {object} props.track - { title, artist, coverUrl, duration, liked }

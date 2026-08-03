@@ -1,17 +1,10 @@
-import AppLayout from './components/layout/AppLayout'
-import HomePage from './pages/HomePage'
+import AppRoutes from './routes/AppRoutes'
 
 /**
- * App shell. Screens are routed by the host app; this composition renders the
- * home screen in its loading state so the layout, player, navigation and
- * skeleton system are all visible without any mock content.
+ * App shell — routing lives in AppRoutes; providers are mounted in main.jsx.
  */
 function App() {
-  return (
-    <AppLayout>
-      <HomePage isLoading />
-    </AppLayout>
-  )
+  return <AppRoutes />
 }
 
 export default App

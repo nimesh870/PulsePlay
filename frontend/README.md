@@ -55,8 +55,7 @@ src/
 │   └── forms/                 # FormField, Input, Select, Textarea, Checkbox,
 │                              # FileDropzone, CreateAlbumForm, UploadMusicForm,
 │                              # LoginForm, SignupForm, AuthLayout
-└── pages/                     # HomePage, AlbumPage, PlaylistPage, ArtistPage,
-                               # LoginPage, SignupPage
+└── pages/                     # HomePage, AlbumPage, ArtistPage, LoginPage, SignupPage
 ```
 
 ## Wiring It Up

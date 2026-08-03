@@ -1,7 +1,7 @@
 import CoverPlaceholder from '../ui/CoverPlaceholder'
 
 /**
- * Shared hero header for albums and playlists: aurora backdrop, cover,
+ * Shared hero header for collections: aurora backdrop, cover,
  * type label, title, meta and an actions row.
  * @param {object} props
  * @param {React.ReactNode} props.cover - image or placeholder

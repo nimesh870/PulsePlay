@@ -3,6 +3,7 @@ import Button from '../ui/Button'
 import Input from './Input'
 import Select from './Select'
 import Textarea from './Textarea'
+import Checkbox from './Checkbox'
 import FileDropzone from './FileDropzone'
 import { GENRES, IMAGE_ACCEPT } from '../../config/constants'
 
@@ -13,8 +14,9 @@ const genreOptions = GENRES.map((genre) => ({ value: genre, label: genre }))
  * @param {object} props
  * @param {Function} props.onSubmit - receives validated form values
  * @param {Function} props.onCancel
+ * @param {{ value: string, label: string }[]} props.tracks - selectable tracks
  */
-export default function CreateAlbumForm({ onSubmit, onCancel }) {
+export default function CreateAlbumForm({ onSubmit, onCancel, tracks = [] }) {
   const {
     register,
     handleSubmit,
@@ -28,6 +30,7 @@ export default function CreateAlbumForm({ onSubmit, onCancel }) {
       releaseDate: '',
       cover: '',
       description: '',
+      musics: [],
     },
   })
 
@@ -88,6 +91,30 @@ export default function CreateAlbumForm({ onSubmit, onCancel }) {
         error={errors.description}
         hint="A short story behind the release"
       />
+
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-semibold text-ink-100">Tracks</legend>
+        {tracks.length > 0 ? (
+          <div className="space-y-1 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3">
+            {tracks.map((track) => (
+              <Checkbox
+                key={track.value}
+                label={track.label}
+                name="musics"
+                value={track.value}
+                register={register}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-ink-500">
+            No tracks to add yet — upload a track first, then attach it here.
+          </p>
+        )}
+        {errors.musics && (
+          <p className="text-xs text-magenta-400">{errors.musics.message}</p>
+        )}
+      </fieldset>
 
       <div className="flex items-center justify-end gap-3 pt-2">
         <Button variant="ghost" onClick={onCancel}>

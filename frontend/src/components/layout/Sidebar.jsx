@@ -1,4 +1,4 @@
-import { RiSettings3Line, RiAddLine } from 'react-icons/ri'
+import { RiSettings3Line } from 'react-icons/ri'
 import { primaryNav, createNav } from '../../config/nav'
 import Logo from '../ui/Logo'
 import Avatar from '../ui/Avatar'
@@ -7,15 +7,9 @@ import NavItem from './NavItem'
 /**
  * Desktop sidebar navigation.
  * @param {object} props
- * @param {object[]} props.playlists - user playlists (each { id, name })
  * @param {object} props.user - { name, email, avatarUrl }
  */
-export default function Sidebar({
-  active,
-  onSelect,
-  playlists = [],
-  user,
-}) {
+export default function Sidebar({ active, onSelect, user }) {
   return (
     <aside className="hidden w-72 shrink-0 flex-col border-r border-white/[0.06] bg-surface/40 backdrop-blur-xl lg:flex">
       {/* Brand */}
@@ -52,39 +46,6 @@ export default function Sidebar({
             />
           ))}
         </ul>
-
-        <div className="mx-3 mt-6 mb-2 flex items-center justify-between">
-          <p className="text-[11px] font-semibold tracking-widest text-ink-500 uppercase">
-            Your playlists
-          </p>
-          <button
-            type="button"
-            aria-label="Create playlist"
-            className="focus-ring flex h-7 w-7 items-center justify-center rounded-full text-ink-500 transition-colors hover:bg-white/[0.06] hover:text-ink-0"
-          >
-            <RiAddLine aria-hidden="true" />
-          </button>
-        </div>
-
-        {/* Playlist list (scrollable) */}
-        <div className="max-h-52 space-y-0.5 overflow-y-auto pb-2">
-          {playlists.length > 0 ? (
-            playlists.map((playlist) => (
-              <button
-                key={playlist.id}
-                type="button"
-                onClick={() => onSelect?.(playlist.id)}
-                className="focus-ring block w-full truncate rounded-lg px-3 py-2 text-left text-sm text-ink-500 transition-colors hover:bg-white/[0.04] hover:text-ink-0"
-              >
-                {playlist.name}
-              </button>
-            ))
-          ) : (
-            <p className="px-3 py-2 text-sm text-ink-500/70">
-              No playlists yet
-            </p>
-          )}
-        </div>
       </nav>
 
       {/* Footer: user + settings */}

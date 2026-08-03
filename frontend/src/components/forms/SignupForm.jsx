@@ -2,7 +2,13 @@ import { useForm, useWatch } from 'react-hook-form'
 import { RiUserLine, RiMailLine, RiLockPasswordLine } from 'react-icons/ri'
 import Button from '../ui/Button'
 import Input from './Input'
+import Select from './Select'
 import Checkbox from './Checkbox'
+
+const roleOptions = [
+  { value: 'user', label: 'Listener' },
+  { value: 'artist', label: 'Artist' },
+]
 
 const emailRules = {
   pattern: {
@@ -30,6 +36,7 @@ export default function SignupForm({ onSubmit }) {
       email: '',
       password: '',
       confirmPassword: '',
+      role: 'user',
       terms: false,
     },
   })
@@ -58,6 +65,14 @@ export default function SignupForm({ onSubmit }) {
         error={errors.email}
         placeholder="you@example.com"
         leftIcon={RiMailLine}
+      />
+      <Select
+        label="Account type"
+        name="role"
+        register={register}
+        options={roleOptions}
+        error={errors.role}
+        hint="Artists can upload music and create albums"
       />
       <div className="grid gap-5 sm:grid-cols-2">
         <Input
