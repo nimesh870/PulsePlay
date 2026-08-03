@@ -1,0 +1,51 @@
+node_modules
+
+# ----------------------------
+# Environment variables (secrets)
+# ----------------------------
+.env
+.env.*
+
+# ----------------------------
+# Build / production files
+# ----------------------------
+build/
+dist/
+.next/
+out/
+
+# ----------------------------
+# Logs
+# ----------------------------
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ----------------------------
+# OS / system files
+# ----------------------------
+.DS_Store
+Thumbs.db
+
+# ----------------------------
+# Editor / IDE files
+# ----------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ----------------------------
+# Backend uploads (multer)
+# ----------------------------
+uploads/
+
+# ----------------------------
+# Cache / temp
+# ----------------------------
+.cache/
+.temp/
+.tmp/
