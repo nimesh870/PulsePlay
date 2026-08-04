@@ -8,8 +8,11 @@ import NavItem from './NavItem'
  * Desktop sidebar navigation.
  * @param {object} props
  * @param {object} props.user - { name, email, avatarUrl }
+ * @param {boolean} props.isArtist - show artist-only create items
  */
-export default function Sidebar({ active, onSelect, user }) {
+export default function Sidebar({ active, onSelect, user, isArtist = false }) {
+  const visibleCreateNav = createNav.filter((item) => !item.artistOnly || isArtist)
+
   return (
     <aside className="hidden w-72 shrink-0 flex-col border-r border-white/[0.06] bg-surface/40 backdrop-blur-xl lg:flex">
       {/* Brand */}
@@ -34,10 +37,10 @@ export default function Sidebar({ active, onSelect, user }) {
       {/* Create + library */}
       <nav aria-label="Create and library" className="mt-6 px-3">
         <p className="px-3 pb-2 text-[11px] font-semibold tracking-widest text-ink-500 uppercase">
-          Create
+          {isArtist ? 'Create' : 'Library'}
         </p>
         <ul className="space-y-1">
-          {createNav.map((item) => (
+          {visibleCreateNav.map((item) => (
             <NavItem
               key={item.id}
               item={item}

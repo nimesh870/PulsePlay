@@ -20,8 +20,8 @@ export const primaryNav = [
 
 export const createNav = [
   { id: 'liked-songs', label: 'Liked Songs', icon: RiHeart3Line },
-  { id: 'upload', label: 'Upload Music', icon: RiUpload2Line },
-  { id: 'create-album', label: 'Create Album', icon: RiAlbumLine },
+  { id: 'upload', label: 'Upload Music', icon: RiUpload2Line, artistOnly: true },
+  { id: 'create-album', label: 'Create Album', icon: RiAlbumLine, artistOnly: true },
 ]
 
 export const mobileNav = [

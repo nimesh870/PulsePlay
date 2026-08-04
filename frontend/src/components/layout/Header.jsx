@@ -8,7 +8,6 @@ import {
 } from '@headlessui/react'
 import {
   RiSearchLine,
-  RiNotification3Line,
   RiUpload2Line,
   RiUserLine,
   RiHeart3Line,
@@ -20,13 +19,12 @@ import { cx } from '../../utils/cx'
 import Logo from '../ui/Logo'
 import Avatar from '../ui/Avatar'
 import Button from '../ui/Button'
-import IconButton from '../ui/IconButton'
 
 const profileMenu = [
   { label: 'Profile', icon: RiUserLine },
   { label: 'Liked Songs', icon: RiHeart3Line },
-  { label: 'Create Album', icon: RiAlbumLine },
-  { label: 'Upload Music', icon: RiUpload2Line },
+  { label: 'Create Album', icon: RiAlbumLine, artistOnly: true },
+  { label: 'Upload Music', icon: RiUpload2Line, artistOnly: true },
   { divider: true },
   { label: 'Settings', icon: RiSettings3Line },
   { label: 'Log out', icon: RiLogoutBoxRLine, danger: true },
@@ -36,6 +34,7 @@ const profileMenu = [
  * Sticky top bar with search, actions and the profile menu.
  * @param {object} props
  * @param {object} props.user - { name, email, avatarUrl }
+ * @param {boolean} props.isArtist - show artist-only actions/menu items
  */
 export default function Header({
   user,
@@ -43,7 +42,12 @@ export default function Header({
   onSearchChange,
   onUpload,
   onNavigate,
+  isArtist = false,
 }) {
+  const menuItems = profileMenu.filter(
+    (item) => !item.artistOnly || isArtist,
+  )
+
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-white/[0.06] bg-overlay/80 px-4 backdrop-blur-xl sm:px-6">
       {/* Brand (mobile only) */}
@@ -68,31 +72,25 @@ export default function Header({
 
       {/* Actions */}
       <div className="flex items-center gap-2">
-        <Button
-          variant="soft"
-          size="sm"
-          className="hidden sm:inline-flex"
-          onClick={onUpload}
-        >
-          <RiUpload2Line aria-hidden="true" className="text-base" />
-          Upload
-        </Button>
+        {isArtist && (
+          <Button
+            variant="soft"
+            size="sm"
+            className="hidden sm:inline-flex"
+            onClick={onUpload}
+          >
+            <RiUpload2Line aria-hidden="true" className="text-base" />
+            Upload
+          </Button>
+        )}
 
-        <span className="relative">
-          <IconButton icon={RiNotification3Line} label="Notifications" />
-          <span
-            aria-hidden="true"
-            className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-magenta-500 ring-2 ring-base"
-          />
-        </span>
-
-        <ProfileMenu user={user} onNavigate={onNavigate} />
+        <ProfileMenu user={user} onNavigate={onNavigate} items={menuItems} />
       </div>
     </header>
   )
 }
 
-function ProfileMenu({ user, onNavigate }) {
+function ProfileMenu({ user, onNavigate, items = profileMenu }) {
   return (
     <Menu as="div" className="relative">
       <MenuButton className="focus-ring rounded-full">
@@ -117,7 +115,7 @@ function ProfileMenu({ user, onNavigate }) {
               {user?.email ?? 'Not signed in'}
             </p>
           </div>
-          {profileMenu.map((item, index) =>
+          {items.map((item, index) =>
             item.divider ? (
               <div
                 key={index}

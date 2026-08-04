@@ -61,6 +61,7 @@ export default function AppLayout() {
   const user = useSelector((state) => state.auth.user)
   const player = useSelector((state) => state.player)
   const likedIds = useSelector(selectLikedIds)
+  const isArtist = user?.role === 'artist'
 
   const active = getActiveId(location.pathname)
   const searchValue = searchParams.get('q') ?? ''
@@ -101,7 +102,7 @@ export default function AppLayout() {
     <div className="relative flex h-dvh overflow-hidden bg-base text-ink-100">
       <GlobalAudio />
 
-      <Sidebar active={active} onSelect={onSelect} user={user} />
+      <Sidebar active={active} onSelect={onSelect} user={user} isArtist={isArtist} />
 
       <div className="flex min-w-0 flex-1 flex-col">
         <Header
@@ -110,6 +111,7 @@ export default function AppLayout() {
           onSearchChange={onSearchChange}
           onUpload={() => navigate('/upload-music')}
           onNavigate={onNavigate}
+          isArtist={isArtist}
         />
 
         <main className="flex-1 overflow-y-auto scrollbar-none pb-44 lg:pb-8">
