@@ -35,7 +35,6 @@ const menuRoutes = {
   'Liked Songs': '/liked-songs',
   'Create Album': '/create-album',
   'Upload Music': '/upload-music',
-  Settings: '/library',
   'Log out': 'logout',
 }
 

@@ -1,4 +1,3 @@
-import { RiSettings3Line } from 'react-icons/ri'
 import { primaryNav, createNav } from '../../config/nav'
 import Logo from '../ui/Logo'
 import Avatar from '../ui/Avatar'
@@ -66,10 +65,6 @@ export default function Sidebar({ active, onSelect, user, isArtist = false }) {
               {user?.email ?? 'Sign in to sync'}
             </span>
           </span>
-          <RiSettings3Line
-            aria-hidden="true"
-            className="shrink-0 text-lg text-ink-500"
-          />
         </button>
       </div>
     </aside>

@@ -1,5 +1,6 @@
 import { useForm, useWatch } from 'react-hook-form'
 import Button from '../ui/Button'
+import Spinner from '../ui/Spinner'
 import Input from './Input'
 import Select from './Select'
 import Textarea from './Textarea'
@@ -15,8 +16,14 @@ const genreOptions = GENRES.map((genre) => ({ value: genre, label: genre }))
  * @param {Function} props.onSubmit - receives validated form values
  * @param {Function} props.onCancel
  * @param {{ value: string, label: string }[]} props.tracks - selectable tracks
+ * @param {boolean} props.loading - shows a spinner and disables the submit button
  */
-export default function CreateAlbumForm({ onSubmit, onCancel, tracks = [] }) {
+export default function CreateAlbumForm({
+  onSubmit,
+  onCancel,
+  tracks = [],
+  loading = false,
+}) {
   const {
     register,
     handleSubmit,
@@ -108,7 +115,8 @@ export default function CreateAlbumForm({ onSubmit, onCancel, tracks = [] }) {
           </div>
         ) : (
           <p className="text-sm text-ink-500">
-            No tracks to add yet — upload a track first, then attach it here.
+            No tracks selected yet \u2014 you can create the album now and add
+            tracks to it later.
           </p>
         )}
         {errors.musics && (
@@ -117,11 +125,18 @@ export default function CreateAlbumForm({ onSubmit, onCancel, tracks = [] }) {
       </fieldset>
 
       <div className="flex items-center justify-end gap-3 pt-2">
-        <Button variant="ghost" onClick={onCancel}>
+        <Button variant="ghost" onClick={onCancel} disabled={loading}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          Create album
+        <Button type="submit" disabled={loading || isSubmitting}>
+          {loading || isSubmitting ? (
+            <>
+              <Spinner size="sm" />
+              Creating…
+            </>
+          ) : (
+            'Create album'
+          )}
         </Button>
       </div>
     </form>

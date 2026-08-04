@@ -12,7 +12,6 @@ import {
   RiUserLine,
   RiHeart3Line,
   RiAlbumLine,
-  RiSettings3Line,
   RiLogoutBoxRLine,
 } from 'react-icons/ri'
 import { cx } from '../../utils/cx'
@@ -26,7 +25,6 @@ const profileMenu = [
   { label: 'Create Album', icon: RiAlbumLine, artistOnly: true },
   { label: 'Upload Music', icon: RiUpload2Line, artistOnly: true },
   { divider: true },
-  { label: 'Settings', icon: RiSettings3Line },
   { label: 'Log out', icon: RiLogoutBoxRLine, danger: true },
 ]
 

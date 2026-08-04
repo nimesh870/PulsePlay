@@ -18,9 +18,12 @@ export default function LoginPage() {
   }, [dispatch])
 
   const onSubmit = async (data) => {
-    const result = await dispatch(
-      login({ username: data.email, password: data.password }),
-    )
+    const payload = {
+      email: data.email.toLowerCase().trim(),
+      password: data.password.trim(),
+    }
+    console.log('Login payload:', payload)
+    const result = await dispatch(login(payload))
     if (login.fulfilled.match(result)) {
       navigate(from, { replace: true })
     }

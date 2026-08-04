@@ -8,6 +8,8 @@ export const fetchAlbums = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const albums = await albumService.fetchAll()
+      console.log('albums:', albums)
+      console.log('length:', albums?.length)
       return albums.map((album) => normalizeAlbum(album))
     } catch (error) {
       return rejectWithValue(extractErrorMessage(error))
@@ -39,6 +41,27 @@ export const createAlbum = createAsyncThunk(
     try {
       const album = await albumService.create(payload)
       return normalizeAlbum(album)
+    } catch (error) {
+      return rejectWithValue(extractErrorMessage(error))
+    }
+  },
+)
+
+export const addAlbumMusic = createAsyncThunk(
+  'albums/addMusic',
+  async ({ albumId, title, file }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData()
+      formData.append('music', file)
+      formData.append('title', title)
+      const album = await albumService.addMusic(albumId, formData)
+      const artistName = album.artist?.username || ''
+      return {
+        album: normalizeAlbum(album),
+        tracks: (album.musics ?? []).map((music) =>
+          normalizeTrack(music, artistName, album.title),
+        ),
+      }
     } catch (error) {
       return rejectWithValue(extractErrorMessage(error))
     }
@@ -95,6 +118,19 @@ const albumSlice = createSlice({
         state.status = 'succeeded'
       })
       .addCase(createAlbum.rejected, (state, action) => {
+        state.status = 'failed'
+        state.error = action.payload
+      })
+      .addCase(addAlbumMusic.pending, (state) => {
+        state.status = 'loading'
+        state.error = null
+      })
+      .addCase(addAlbumMusic.fulfilled, (state, action) => {
+        state.current = action.payload
+        state.status = 'succeeded'
+        state.error = null
+      })
+      .addCase(addAlbumMusic.rejected, (state, action) => {
         state.status = 'failed'
         state.error = action.payload
       })

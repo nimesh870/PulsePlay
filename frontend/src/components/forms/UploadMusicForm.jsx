@@ -1,5 +1,6 @@
 import { useForm, useWatch } from 'react-hook-form'
 import Button from '../ui/Button'
+import Spinner from '../ui/Spinner'
 import Input from './Input'
 import Select from './Select'
 import FileDropzone from './FileDropzone'
@@ -16,8 +17,14 @@ const genreOptions = GENRES.map((genre) => ({ value: genre, label: genre }))
  * disabled state is shown so users create one first.
  * @param {object} props
  * @param {object[]} props.albums - [{ value, label }]
+ * @param {boolean} props.loading - shows a spinner and disables the submit button
  */
-export default function UploadMusicForm({ onSubmit, onCancel, albums = [] }) {
+export default function UploadMusicForm({
+  onSubmit,
+  onCancel,
+  albums = [],
+  loading = false,
+}) {
   const {
     register,
     handleSubmit,
@@ -101,11 +108,18 @@ export default function UploadMusicForm({ onSubmit, onCancel, albums = [] }) {
       />
 
       <div className="flex items-center justify-end gap-3 pt-2">
-        <Button variant="ghost" onClick={onCancel}>
+        <Button variant="ghost" onClick={onCancel} disabled={loading}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          Upload track
+        <Button type="submit" disabled={loading || isSubmitting}>
+          {loading || isSubmitting ? (
+            <>
+              <Spinner size="sm" />
+              Uploading…
+            </>
+          ) : (
+            'Upload track'
+          )}
         </Button>
       </div>
     </form>

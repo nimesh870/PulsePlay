@@ -58,26 +58,24 @@ const createAlbum = async (req , res) => {
             })
         }
 
-        if (!musics || !Array.isArray(musics) || musics.length === 0) {
-            return res.status(400).json({
-                error: "Musics must be a non-empty array"
-            });
-        }
+        const musicIds = musics && Array.isArray(musics) ? musics : [];
 
-        const existingMusics = await musicModel.find({
-            _id : { $in: musics }
-        });
-
-        if (existingMusics.length !== musics.length) {
-            return res.status(400).json({
-                error: "One or more music IDs are invalid"
+        if (musicIds.length > 0) {
+            const existingMusics = await musicModel.find({
+                _id : { $in: musicIds }
             });
+
+            if (existingMusics.length !== musicIds.length) {
+                return res.status(400).json({
+                    error: "One or more music IDs are invalid"
+                });
+            }
         }
 
         const album = await albumModel.create({
             title,
             artist : req.user._id,
-            musics
+            musics : musicIds
         })
 
         res.status(201).json({
@@ -89,6 +87,72 @@ const createAlbum = async (req , res) => {
     } catch (error) {
         res.status(500).json({
             error : "Cannot create album",
+            details : error.message
+        })
+    }
+}
+
+const addMusicToAlbum = async (req , res) => {
+    try {
+        const { albumId } = req.params;
+        const file = req.file;
+        const { title } = req.body;
+
+        if (!albumId) {
+            return res.status(400).json({
+                error : "Album id is required."
+            })
+        }
+
+        if (!title) {
+            return res.status(400).json({
+                error : "Music title is required."
+            })
+        }
+
+        if (!file) {
+            return res.status(400).json({
+                error : "File is required."
+            })
+        }
+
+        const album = await albumModel.findById(albumId);
+
+        if (!album) {
+            return res.status(404).json({
+                error : "No album found."
+            })
+        }
+
+        const response = await uploadFiles(file.buffer.toString('base64'))
+
+        if (!response || !response.url) {
+            return res.status(500).json({
+                error : "File upload failed."
+            })
+        }
+
+        const music = await musicModel.create({
+            uri : response.url,
+            title,
+            artist : req.user._id
+        })
+
+        album.musics.push(music._id)
+        await album.save()
+
+        const populated = await albumModel.findById(albumId)
+            .populate('artist', 'username email')
+            .populate('musics');
+
+        res.status(201).json({
+            message : "Music added to album successfully.",
+            album : populated
+        })
+
+    } catch (error) {
+        res.status(500).json({
+            error : "Cannot add music to album",
             details : error.message
         })
     }
@@ -175,4 +239,4 @@ const getAlbumById = async (req , res) => {
 }
 
 
-module.exports = {createMusic , createAlbum , getAllMusic , getAllAlbums , getAlbumById};
+module.exports = {createMusic , createAlbum , getAllMusic , getAllAlbums , getAlbumById , addMusicToAlbum};

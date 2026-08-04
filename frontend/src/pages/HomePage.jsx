@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useSearchParams } from 'react-router'
 import {
@@ -9,8 +9,12 @@ import {
   RiTimeLine,
   RiCloseLine,
   RiDiscLine,
+  RiAlbumLine,
+  RiAddLine,
+  RiCloseFill,
 } from 'react-icons/ri'
 import MusicCard from '../components/cards/MusicCard'
+import AlbumCard from '../components/cards/AlbumCard'
 import ArtistCard from '../components/cards/ArtistCard'
 import TrackRow from '../components/cards/TrackRow'
 import SectionHeader from '../components/sections/SectionHeader'
@@ -20,13 +24,16 @@ import EmptyState from '../components/ui/EmptyState'
 import Skeleton from '../components/ui/Skeleton'
 import PlayButton from '../components/ui/PlayButton'
 import IconButton from '../components/ui/IconButton'
+import Button from '../components/ui/Button'
+import Spinner from '../components/ui/Spinner'
+import Input from '../components/forms/Input'
 import {
   SkeletonCardGrid,
   SkeletonHero,
   SkeletonList,
 } from '../components/ui/Skeletons'
 import { fetchMusic } from '../store/slices/musicSlice'
-import { fetchAlbums, fetchAlbumById } from '../store/slices/albumSlice'
+import { fetchAlbums, fetchAlbumById, addAlbumMusic } from '../store/slices/albumSlice'
 import {
   playTrack,
   playQueue,
@@ -34,6 +41,7 @@ import {
 } from '../store/slices/playerSlice'
 import { toggleLike, selectLikedIds } from '../store/slices/likesSlice'
 import { withLikes } from '../utils/normalizers'
+import { AUDIO_ACCEPT } from '../config/constants'
 
 function getGreeting() {
   const hour = new Date().getHours()
@@ -62,8 +70,10 @@ export default function HomePage() {
   } = useSelector((state) => state.album)
   const { current, isPlaying } = useSelector((state) => state.player)
   const likedIds = useSelector(selectLikedIds)
+  const user = useSelector((state) => state.auth.user)
 
   const selectedAlbumId = searchParams.get('album')
+  const [showAddTrack, setShowAddTrack] = useState(false)
 
   useEffect(() => {
     if (musicStatus === 'idle') dispatch(fetchMusic())
@@ -82,6 +92,8 @@ export default function HomePage() {
   const selectedTracks =
     albumDetail?.id === selectedAlbumId ? withLikes(albumDetail.tracks, likedIds) : []
   const listAlbum = albums.find((album) => album.id === selectedAlbumId)
+  const selectedAlbumData = selectedAlbum ?? listAlbum
+  const albumArtistId = selectedAlbumData?.artistId
   const selectedLoading =
     Boolean(selectedAlbumId) &&
     (albumStatus === 'idle' || albumStatus === 'loading') &&
@@ -93,9 +105,18 @@ export default function HomePage() {
 
   const clearAlbum = () => setSearchParams({})
 
+  const visibleAlbums = useMemo(() => {
+    if (user?.role === 'artist') {
+      return albums.filter(
+        (album) => String(album.artistId) === String(user?.id),
+      )
+    }
+    return albums
+  }, [albums, user?.role, user?.id])
+
   const topArtists = useMemo(() => {
     const map = new Map()
-    albums.forEach((album) => {
+    visibleAlbums.forEach((album) => {
       if (album.artistId && !map.has(album.artistId)) {
         map.set(album.artistId, {
           id: album.artistId,
@@ -106,7 +127,7 @@ export default function HomePage() {
       }
     })
     return [...map.values()]
-  }, [albums])
+  }, [visibleAlbums])
 
   const tracksWithArtists = useMemo(() => {
     const names = new Map()
@@ -125,9 +146,16 @@ export default function HomePage() {
     [tracksWithArtists, likedIds],
   )
 
+  const selectedFallbackTracks = useMemo(() => {
+    if (!albumArtistId) return displayTracks
+    return displayTracks.filter(
+      (track) => String(track.artistId) === String(albumArtistId),
+    )
+  }, [displayTracks, albumArtistId])
+
   const onLike = (track) => dispatch(toggleLike(track.id))
 
-  const spotlight = albums[0]
+  const spotlight = visibleAlbums[0]
   const headline = getGreeting()
 
   return (
@@ -143,23 +171,45 @@ export default function HomePage() {
 
       {selectedAlbumId ? (
         <AlbumDetailView
-          album={selectedAlbum ?? listAlbum}
+          album={selectedAlbumData}
           tracks={selectedTracks}
-          fallbackTracks={displayTracks}
+          fallbackTracks={selectedFallbackTracks}
           playingId={current?.id}
           playing={isPlaying}
           isLoading={selectedLoading}
           error={selectedError}
+          canAddTrack={
+            user?.role === 'artist' &&
+            Boolean(selectedAlbumId) &&
+            String(selectedAlbumData?.artistId) === String(user?.id)
+          }
+          showAddTrack={showAddTrack}
+          onToggleAddTrack={() => setShowAddTrack((value) => !value)}
+          onAddTrack={async ({ title, file }) => {
+            if (!selectedAlbumId || !title || !file) return false
+            const result = await dispatch(
+              addAlbumMusic({ albumId: selectedAlbumId, title, file }),
+            )
+            if (addAlbumMusic.fulfilled.match(result)) {
+              setShowAddTrack(false)
+              return true
+            }
+            return false
+          }}
           onPlayAll={() =>
             dispatch(
               playQueue({
-                tracks: selectedTracks.length > 0 ? selectedTracks : displayTracks,
+                tracks:
+                  selectedTracks.length > 0
+                    ? selectedTracks
+                    : selectedFallbackTracks,
                 index: 0,
               }),
             )
           }
           onShuffle={() => {
-            const queue = selectedTracks.length > 0 ? selectedTracks : displayTracks
+            const queue =
+              selectedTracks.length > 0 ? selectedTracks : selectedFallbackTracks
             dispatch(setShuffle(true))
             dispatch(
               playQueue({
@@ -169,7 +219,8 @@ export default function HomePage() {
             )
           }}
           onPlayTrack={(track) => {
-            const queue = selectedTracks.length > 0 ? selectedTracks : displayTracks
+            const queue =
+              selectedTracks.length > 0 ? selectedTracks : selectedFallbackTracks
             dispatch(playTrack({ track, queue }))
           }}
           onLike={(track) => dispatch(toggleLike(track.id))}
@@ -263,6 +314,47 @@ export default function HomePage() {
             </div>
           </section>
 
+          {/* Albums */}
+          <section>
+            <SectionHeader
+              title="Albums"
+              subtitle={
+                user?.role === 'artist'
+                  ? 'Albums you have released'
+                  : 'Albums from every artist'
+              }
+              icon={RiAlbumLine}
+              actionLabel={visibleAlbums.length > 0 ? undefined : undefined}
+            />
+            {albums.length > 0 && visibleAlbums.length > 0 ? (
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                {visibleAlbums.map((album) => (
+                  <AlbumCard
+                    key={album.id}
+                    album={album}
+                    onSelect={() => navigate(`/home?album=${album.id}`)}
+                    onPlay={() => navigate(`/home?album=${album.id}`)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                icon={RiAlbumLine}
+                title={
+                  user?.role === 'artist'
+                    ? 'No albums yet'
+                    : 'No albums yet'
+                }
+                description={
+                  user?.role === 'artist'
+                    ? 'Create an album to start building your catalog.'
+                    : 'Albums will appear here once artists create them.'
+                }
+                className="py-10"
+              />
+            )}
+          </section>
+
           {/* Top artists */}
           <section>
             <SectionHeader title="Top artists" icon={RiHeart3Line} />
@@ -298,12 +390,37 @@ function AlbumDetailView({
   onPlayTrack,
   onLike,
   onClose,
+  canAddTrack = false,
+  showAddTrack = false,
+  onToggleAddTrack,
+  onAddTrack,
 }) {
   const trackList = tracks.length > 0 ? tracks : fallbackTracks
   const meta =
     trackList.length > 0
       ? `${trackList.length} track${trackList.length === 1 ? '' : 's'}`
       : null
+  const [newTitle, setNewTitle] = useState('')
+  const [newFile, setNewFile] = useState(null)
+  const [adding, setAdding] = useState(false)
+  const [addError, setAddError] = useState(null)
+
+  const submitNewTrack = async () => {
+    if (!newTitle.trim() || !newFile) return
+    setAdding(true)
+    setAddError(null)
+    try {
+      const ok = await onAddTrack?.({ title: newTitle.trim(), file: newFile })
+      if (ok === false) {
+        setAddError("Couldn't add the track. Please try again.")
+        return
+      }
+      setNewTitle('')
+      setNewFile(null)
+    } finally {
+      setAdding(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -322,6 +439,14 @@ function AlbumDetailView({
               size="lg"
               onClick={onShuffle}
             />
+            {canAddTrack && (
+              <IconButton
+                icon={RiAddLine}
+                label="Add track"
+                size="lg"
+                onClick={onToggleAddTrack}
+              />
+            )}
             <IconButton
               icon={RiCloseLine}
               label="Back to home"
@@ -332,6 +457,77 @@ function AlbumDetailView({
           </>
         }
       />
+
+      {canAddTrack && showAddTrack && (
+        <div className="rounded-2xl border border-white/[0.06] bg-surface/40 p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-ink-0">Add a track</h2>
+            <button
+              type="button"
+              aria-label="Close"
+              className="focus-ring rounded-full p-1 text-ink-500 hover:text-ink-0"
+              onClick={onToggleAddTrack}
+            >
+              <RiCloseFill aria-hidden="true" className="text-lg" />
+            </button>
+          </div>
+          <div className="mt-4 space-y-4">
+            <Input
+              label="Track title"
+              name="newTrackTitle"
+              value={newTitle}
+              onChange={(event) => setNewTitle(event.target.value)}
+              placeholder="e.g. Night Drive"
+            />
+            <label className="block space-y-1.5">
+              <span className="text-sm font-medium text-ink-200">Audio file</span>
+              <span className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 text-sm transition-colors hover:border-white/25 hover:bg-white/[0.04]">
+                <span className="truncate text-ink-300">
+                  {newFile?.name ?? 'Choose an audio file…'}
+                </span>
+                <input
+                  type="file"
+                  accept={AUDIO_ACCEPT}
+                  className="sr-only"
+                  onChange={(event) => setNewFile(event.target.files?.[0] ?? null)}
+                />
+                <span className="shrink-0 text-accent-400">Browse</span>
+              </span>
+              <span className="block text-xs text-ink-500">
+                High quality sources deliver the best playback
+              </span>
+            </label>
+            <div className="flex items-center justify-end gap-3">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setNewTitle('')
+                  setNewFile(null)
+                  onToggleAddTrack?.()
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={submitNewTrack}
+                disabled={adding || !newTitle.trim() || !newFile}
+              >
+                {adding ? (
+                  <>
+                    <Spinner size="sm" />
+                    Adding…
+                  </>
+                ) : (
+                  'Add track'
+                )}
+              </Button>
+            </div>
+            {addError && (
+              <p className="text-xs text-magenta-400">{addError}</p>
+            )}
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <SkeletonList count={8} />

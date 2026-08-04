@@ -21,7 +21,10 @@ export default function UploadMusicPage() {
     if (albums.length === 0) dispatch(fetchAlbums())
   }, [dispatch, albums.length])
 
-  const albumOptions = albums.map((album) => ({
+  const myAlbums = albums.filter(
+    (album) => String(album.artistId) === String(user?.id),
+  )
+  const albumOptions = myAlbums.map((album) => ({
     value: album.id,
     label: album.title,
   }))
@@ -67,9 +70,10 @@ export default function UploadMusicPage() {
 
       <div className="rounded-3xl border border-white/[0.06] bg-surface/40 p-6 sm:p-8">
         <UploadMusicForm
-          onSubmit={status === 'loading' ? undefined : onSubmit}
+          onSubmit={onSubmit}
           onCancel={() => navigate('/home')}
           albums={albumOptions}
+          loading={status === 'loading'}
         />
       </div>
     </div>

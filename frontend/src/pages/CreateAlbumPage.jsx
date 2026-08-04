@@ -37,7 +37,8 @@ export default function CreateAlbumPage() {
       }),
     )
     if (createAlbum.fulfilled.match(result)) {
-      navigate('/home')
+      const album = result.payload
+      navigate(album?.id ? `/home?album=${album.id}` : '/home')
     }
   }
 
@@ -56,9 +57,10 @@ export default function CreateAlbumPage() {
 
       <div className="rounded-3xl border border-white/[0.06] bg-surface/40 p-6 sm:p-8">
         <CreateAlbumForm
-          onSubmit={status === 'loading' ? undefined : onSubmit}
+          onSubmit={onSubmit}
           onCancel={() => navigate('/home')}
           tracks={trackOptions}
+          loading={status === 'loading'}
         />
       </div>
     </div>

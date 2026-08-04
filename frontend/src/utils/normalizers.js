@@ -19,11 +19,12 @@ export function normalizeTrack(music, artistName = '', albumName = '') {
 
 export function normalizeAlbum(album) {
   const artist = album.artist
+  const artistIsObject = artist && typeof artist === 'object'
   return {
     id: album._id,
     title: album.title,
-    artist: artist?.username || 'Unknown artist',
-    artistId: artist?._id,
+    artist: artistIsObject ? artist.username || 'Unknown artist' : 'Unknown artist',
+    artistId: artistIsObject ? artist._id : artist,
     coverUrl: undefined,
     year: undefined,
     trackCount: Array.isArray(album.musics) ? album.musics.length : undefined,
