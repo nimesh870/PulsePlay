@@ -63,15 +63,15 @@ const registerUser = async (req , res) => {
 const loginUser = async (req , res) => {
     try {
         
-        const {username , password , email} = req.body;
+        const {email , password} = req.body;
 
-        if (!username || !password) {
+        if (!email || !password) {
             return res.status(400).json({
                 error : "Required username or password."
             })
         }
 
-        const user = await authModel.findOne({username})
+        const user = await authModel.findOne({email})
 
         if (!user) {
             return res.status(401).json({
