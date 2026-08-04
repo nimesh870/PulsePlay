@@ -11,7 +11,7 @@ const app = express();
 
 // CORS
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: "https://pulse-play-nimesh-dulals-projects.vercel.app",
     credentials: true
 }));
 
