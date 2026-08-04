@@ -8,8 +8,6 @@ export const fetchAlbums = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const albums = await albumService.fetchAll()
-      console.log('albums:', albums)
-      console.log('length:', albums?.length)
       return albums.map((album) => normalizeAlbum(album))
     } catch (error) {
       return rejectWithValue(extractErrorMessage(error))
