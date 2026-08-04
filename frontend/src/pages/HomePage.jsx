@@ -1,28 +1,39 @@
 import { useEffect, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import {
   RiHeart3Line,
   RiHistoryLine,
-  RiSparkling2Line,
   RiFireLine,
+  RiShuffleLine,
+  RiTimeLine,
+  RiCloseLine,
+  RiDiscLine,
 } from 'react-icons/ri'
 import MusicCard from '../components/cards/MusicCard'
-import AlbumCard from '../components/cards/AlbumCard'
 import ArtistCard from '../components/cards/ArtistCard'
 import TrackRow from '../components/cards/TrackRow'
 import SectionHeader from '../components/sections/SectionHeader'
+import CollectionHeader from '../components/sections/CollectionHeader'
 import HeroBanner from '../components/sections/HeroBanner'
 import EmptyState from '../components/ui/EmptyState'
 import Skeleton from '../components/ui/Skeleton'
+import PlayButton from '../components/ui/PlayButton'
+import IconButton from '../components/ui/IconButton'
 import {
   SkeletonCardGrid,
   SkeletonHero,
   SkeletonList,
 } from '../components/ui/Skeletons'
 import { fetchMusic } from '../store/slices/musicSlice'
-import { fetchAlbums } from '../store/slices/albumSlice'
-import { playTrack } from '../store/slices/playerSlice'
+import { fetchAlbums, fetchAlbumById } from '../store/slices/albumSlice'
+import {
+  playTrack,
+  playQueue,
+  setShuffle,
+} from '../store/slices/playerSlice'
+import { toggleLike, selectLikedIds } from '../store/slices/likesSlice'
+import { withLikes } from '../utils/normalizers'
 
 function getGreeting() {
   const hour = new Date().getHours()
@@ -39,22 +50,48 @@ function getGreeting() {
 export default function HomePage() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { items: tracks, status: musicStatus } = useSelector(
     (state) => state.music,
   )
-  const { items: albums, status: albumStatus } = useSelector(
-    (state) => state.album,
-  )
-  const { current } = useSelector((state) => state.player)
+  const {
+    items: albums,
+    current: albumDetail,
+    status: albumStatus,
+    error: albumError,
+  } = useSelector((state) => state.album)
+  const { current, isPlaying } = useSelector((state) => state.player)
+  const likedIds = useSelector(selectLikedIds)
+
+  const selectedAlbumId = searchParams.get('album')
 
   useEffect(() => {
     if (musicStatus === 'idle') dispatch(fetchMusic())
     if (albumStatus === 'idle') dispatch(fetchAlbums())
   }, [dispatch, musicStatus, albumStatus])
 
+  useEffect(() => {
+    if (selectedAlbumId) dispatch(fetchAlbumById(selectedAlbumId))
+  }, [dispatch, selectedAlbumId])
+
   const isLoading =
     ((musicStatus === 'idle' || musicStatus === 'loading') && tracks.length === 0) ||
     ((albumStatus === 'idle' || albumStatus === 'loading') && albums.length === 0)
+
+  const selectedAlbum = albumDetail?.id === selectedAlbumId ? albumDetail.album : undefined
+  const selectedTracks =
+    albumDetail?.id === selectedAlbumId ? withLikes(albumDetail.tracks, likedIds) : []
+  const listAlbum = albums.find((album) => album.id === selectedAlbumId)
+  const selectedLoading =
+    Boolean(selectedAlbumId) &&
+    (albumStatus === 'idle' || albumStatus === 'loading') &&
+    !selectedAlbum
+  const selectedError =
+    Boolean(selectedAlbumId) && albumStatus === 'failed' && !selectedAlbum
+      ? albumError
+      : undefined
+
+  const clearAlbum = () => setSearchParams({})
 
   const topArtists = useMemo(() => {
     const map = new Map()
@@ -83,6 +120,13 @@ export default function HomePage() {
     )
   }, [tracks, albums])
 
+  const displayTracks = useMemo(
+    () => withLikes(tracksWithArtists, likedIds),
+    [tracksWithArtists, likedIds],
+  )
+
+  const onLike = (track) => dispatch(toggleLike(track.id))
+
   const spotlight = albums[0]
   const headline = getGreeting()
 
@@ -97,7 +141,41 @@ export default function HomePage() {
         </p>
       </header>
 
-      {isLoading ? (
+      {selectedAlbumId ? (
+        <AlbumDetailView
+          album={selectedAlbum ?? listAlbum}
+          tracks={selectedTracks}
+          fallbackTracks={displayTracks}
+          playingId={current?.id}
+          playing={isPlaying}
+          isLoading={selectedLoading}
+          error={selectedError}
+          onPlayAll={() =>
+            dispatch(
+              playQueue({
+                tracks: selectedTracks.length > 0 ? selectedTracks : displayTracks,
+                index: 0,
+              }),
+            )
+          }
+          onShuffle={() => {
+            const queue = selectedTracks.length > 0 ? selectedTracks : displayTracks
+            dispatch(setShuffle(true))
+            dispatch(
+              playQueue({
+                tracks: queue,
+                index: Math.floor(Math.random() * queue.length),
+              }),
+            )
+          }}
+          onPlayTrack={(track) => {
+            const queue = selectedTracks.length > 0 ? selectedTracks : displayTracks
+            dispatch(playTrack({ track, queue }))
+          }}
+          onLike={(track) => dispatch(toggleLike(track.id))}
+          onClose={clearAlbum}
+        />
+      ) : isLoading ? (
         <div className="space-y-10">
           <SkeletonHero />
           <section>
@@ -119,8 +197,8 @@ export default function HomePage() {
                 coverUrl: spotlight.coverUrl,
               }}
               playing={current?.id === spotlight.id}
-              onPlay={() => navigate(`/album/${spotlight.id}`)}
-              onSelect={() => navigate(`/album/${spotlight.id}`)}
+              onPlay={() => navigate(`/home?album=${spotlight.id}`)}
+              onSelect={() => navigate(`/home?album=${spotlight.id}`)}
             />
           )}
 
@@ -133,13 +211,13 @@ export default function HomePage() {
             />
             {tracks.length > 0 ? (
               <div className="scrollbar-none flex snap-x gap-4 overflow-x-auto pb-2">
-                {tracksWithArtists.slice(0, 10).map((track) => (
+                {displayTracks.slice(0, 10).map((track) => (
                   <MusicCard
                     key={track.id}
                     track={track}
                     playing={current?.id === track.id}
-                    onPlay={() => dispatch(playTrack({ track, queue: tracks }))}
-                    onSelect={() => dispatch(playTrack({ track, queue: tracks }))}
+                    onPlay={() => dispatch(playTrack({ track, queue: displayTracks }))}
+                    onSelect={() => dispatch(playTrack({ track, queue: displayTracks }))}
                     className="w-40 shrink-0 snap-start"
                   />
                 ))}
@@ -154,25 +232,6 @@ export default function HomePage() {
             )}
           </section>
 
-          {/* Featured albums */}
-          <section>
-            <SectionHeader
-              title="Featured albums"
-              subtitle="Fresh out of the studio"
-              icon={RiSparkling2Line}
-            />
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              {albums.map((album) => (
-                <AlbumCard
-                  key={album.id}
-                  album={album}
-                  onPlay={() => navigate(`/album/${album.id}`)}
-                  onSelect={() => navigate(`/album/${album.id}`)}
-                />
-              ))}
-            </div>
-          </section>
-
           {/* Trending tracks */}
           <section>
             <SectionHeader
@@ -182,15 +241,15 @@ export default function HomePage() {
             />
             <div className="rounded-2xl border border-white/[0.06] bg-surface/40 p-2">
               {tracks.length > 0 ? (
-                tracksWithArtists.map((track, index) => (
+                displayTracks.map((track, index) => (
                   <TrackRow
                     key={track.id}
                     index={index}
                     track={track}
                     playing={current?.id === track.id}
-                    onPlay={() => dispatch(playTrack({ track, queue: tracks }))}
-                    onSelect={() => dispatch(playTrack({ track, queue: tracks }))}
-                    onLike={() => {}}
+                    onPlay={() => dispatch(playTrack({ track, queue: displayTracks }))}
+                    onSelect={() => dispatch(playTrack({ track, queue: displayTracks }))}
+                    onLike={() => onLike(track)}
                   />
                 ))
               ) : (
@@ -218,6 +277,102 @@ export default function HomePage() {
             </div>
           </section>
         </>
+      )}
+    </div>
+  )
+}
+
+/**
+ * Full tracklist for a selected album, rendered inline on the home page.
+ */
+function AlbumDetailView({
+  album,
+  tracks,
+  fallbackTracks = [],
+  playingId,
+  playing = false,
+  isLoading,
+  error,
+  onPlayAll,
+  onShuffle,
+  onPlayTrack,
+  onLike,
+  onClose,
+}) {
+  const trackList = tracks.length > 0 ? tracks : fallbackTracks
+  const meta =
+    trackList.length > 0
+      ? `${trackList.length} track${trackList.length === 1 ? '' : 's'}`
+      : null
+
+  return (
+    <div className="space-y-6">
+      <CollectionHeader
+        typeLabel="Album"
+        title={album?.title}
+        subtitle={album?.artist}
+        coverUrl={album?.coverUrl}
+        meta={meta}
+        actions={
+          <>
+            <PlayButton size="lg" onClick={onPlayAll} />
+            <IconButton
+              icon={RiShuffleLine}
+              label="Shuffle"
+              size="lg"
+              onClick={onShuffle}
+            />
+            <IconButton
+              icon={RiCloseLine}
+              label="Back to home"
+              variant="ghost"
+              size="lg"
+              onClick={onClose}
+            />
+          </>
+        }
+      />
+
+      {isLoading ? (
+        <SkeletonList count={8} />
+      ) : error && tracks.length === 0 && fallbackTracks.length === 0 ? (
+        <EmptyState
+          icon={RiDiscLine}
+          title="Couldn&apos;t load the tracks"
+          description={error}
+          className="py-16"
+        />
+      ) : trackList.length > 0 ? (
+        <div className="rounded-2xl border border-white/[0.06] bg-surface/40 p-2">
+          <div className="hidden items-center gap-3 px-3 py-2 text-[11px] font-semibold tracking-widest text-ink-500 uppercase md:flex">
+            <span className="w-8 shrink-0 text-center">#</span>
+            <span className="flex-1">Title</span>
+            <span className="w-36 shrink-0">Album</span>
+            <span className="w-10 shrink-0 text-right">
+              <RiTimeLine aria-hidden="true" />
+            </span>
+          </div>
+          <div className="divide-y divide-white/[0.04]">
+            {trackList.map((track, index) => (
+              <TrackRow
+                key={track.id}
+                index={index}
+                track={track}
+                playing={playingId === track.id}
+                isPlaying={playing}
+                onPlay={() => onPlayTrack?.(track)}
+                onSelect={() => onPlayTrack?.(track)}
+                onLike={() => onLike?.(track)}
+              />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <EmptyState
+          icon={RiDiscLine}
+          title="No tracks yet"
+          description="Tracks from this album will appear here once uploaded."
+        />
       )}
     </div>
   )

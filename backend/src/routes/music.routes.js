@@ -10,6 +10,6 @@ router.post('/create-music' , protect , upload.single('music') ,  createMusic)
 router.post('/album' , protect , createAlbum)
 router.get('/listen-music' , authUser , getAllMusic)
 router.get('/view-albums' , authUser , getAllAlbums)
-router.get('/view-albums/:albumId' , protect , getAlbumById)
+router.get('/view-albums/:albumId' , authUser , getAlbumById)
 
 module.exports = router;

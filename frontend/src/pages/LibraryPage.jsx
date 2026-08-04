@@ -9,6 +9,8 @@ import EmptyState from '../components/ui/EmptyState'
 import { fetchMusic } from '../store/slices/musicSlice'
 import { fetchAlbums } from '../store/slices/albumSlice'
 import { playTrack } from '../store/slices/playerSlice'
+import { toggleLike, selectLikedIds } from '../store/slices/likesSlice'
+import { withLikes } from '../utils/normalizers'
 
 /**
  * Your Library — the full catalog grouped into albums and tracks.
@@ -18,7 +20,9 @@ export default function LibraryPage() {
   const navigate = useNavigate()
   const tracks = useSelector((state) => state.music.items)
   const albums = useSelector((state) => state.album.items)
-  const { current } = useSelector((state) => state.player)
+  const { current, isPlaying } = useSelector((state) => state.player)
+  const likedIds = useSelector(selectLikedIds)
+  const displayTracks = withLikes(tracks, likedIds)
 
   useEffect(() => {
     if (tracks.length === 0) dispatch(fetchMusic())
@@ -55,8 +59,8 @@ export default function LibraryPage() {
                   <AlbumCard
                     key={album.id}
                     album={album}
-                    onPlay={() => navigate(`/album/${album.id}`)}
-                    onSelect={() => navigate(`/album/${album.id}`)}
+                    onPlay={() => navigate(`/home?album=${album.id}`)}
+                    onSelect={() => navigate(`/home?album=${album.id}`)}
                   />
                 ))}
               </div>
@@ -67,14 +71,16 @@ export default function LibraryPage() {
             <section>
               <SectionHeader title="Tracks" />
               <div className="rounded-2xl border border-white/[0.06] bg-surface/40 p-2">
-                {tracks.map((track, index) => (
+                {displayTracks.map((track, index) => (
                   <TrackRow
                     key={track.id}
                     index={index}
                     track={track}
                     playing={current?.id === track.id}
-                    onPlay={() => dispatch(playTrack({ track, queue: tracks }))}
-                    onSelect={() => dispatch(playTrack({ track, queue: tracks }))}
+                    isPlaying={isPlaying}
+                    onPlay={() => dispatch(playTrack({ track, queue: displayTracks }))}
+                    onSelect={() => dispatch(playTrack({ track, queue: displayTracks }))}
+                    onLike={() => dispatch(toggleLike(track.id))}
                   />
                 ))}
               </div>

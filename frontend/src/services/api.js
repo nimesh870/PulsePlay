@@ -3,10 +3,6 @@ import { getToken, clearAuth } from '../utils/storage'
 
 export const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || '/api'
 
-/**
- * Shared axios instance. Attaches the Bearer token from storage on every
- * request and clears expired credentials when the backend answers 401.
- */
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
 })

@@ -18,12 +18,13 @@ import {
   toggleShuffle,
   toggleRepeat,
 } from '../../store/slices/playerSlice'
+import { toggleLike, selectLikedIds } from '../../store/slices/likesSlice'
 
 const navRoutes = {
   home: '/home',
   search: '/search',
   library: '/library',
-  'liked-songs': '/library',
+  'liked-songs': '/liked-songs',
   upload: '/upload-music',
   'create-album': '/create-album',
   profile: '/library',
@@ -31,7 +32,7 @@ const navRoutes = {
 
 const menuRoutes = {
   Profile: '/library',
-  'Liked Songs': '/library',
+  'Liked Songs': '/liked-songs',
   'Create Album': '/create-album',
   'Upload Music': '/upload-music',
   Settings: '/library',
@@ -41,6 +42,7 @@ const menuRoutes = {
 function getActiveId(pathname) {
   if (pathname.startsWith('/search')) return 'search'
   if (pathname.startsWith('/library')) return 'library'
+  if (pathname.startsWith('/liked-songs')) return 'liked-songs'
   if (pathname.startsWith('/create-album')) return 'create-album'
   if (pathname.startsWith('/upload-music')) return 'upload'
   return 'home'
@@ -58,9 +60,13 @@ export default function AppLayout() {
   const [searchParams, setSearchParams] = useSearchParams()
   const user = useSelector((state) => state.auth.user)
   const player = useSelector((state) => state.player)
+  const likedIds = useSelector(selectLikedIds)
 
   const active = getActiveId(location.pathname)
   const searchValue = searchParams.get('q') ?? ''
+  const currentTrack = player.current
+    ? { ...player.current, liked: likedIds.includes(player.current.id) }
+    : null
 
   useEffect(() => {
     const onUnauthorized = () => {
@@ -113,7 +119,7 @@ export default function AppLayout() {
         </main>
 
         <MusicPlayer
-          track={player.current}
+          track={currentTrack}
           isPlaying={player.isPlaying}
           currentTime={player.currentTime}
           duration={player.duration}
@@ -125,7 +131,9 @@ export default function AppLayout() {
           onNext={() => dispatch(next())}
           onPrev={() => dispatch(prev())}
           onSeek={(time) => dispatch(seek(time))}
-          onLike={() => {}}
+          onLike={() => {
+            if (player.current) dispatch(toggleLike(player.current.id))
+          }}
           onVolumeChange={(value) => dispatch(setVolume(value))}
           onToggleMute={() => dispatch(toggleMute())}
           onToggleShuffle={() => dispatch(toggleShuffle())}

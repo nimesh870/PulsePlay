@@ -21,6 +21,8 @@ import {
   playTrack,
   setShuffle,
 } from '../store/slices/playerSlice'
+import { toggleLike, selectLikedIds } from '../store/slices/likesSlice'
+import { withLikes } from '../utils/normalizers'
 
 /**
  * Album detail — hero header + full tracklist, loaded from the backend.
@@ -28,8 +30,9 @@ import {
 export default function AlbumPage() {
   const dispatch = useDispatch()
   const { albumId } = useParams()
-  const { current, status } = useSelector((state) => state.album)
-  const { current: currentTrack } = useSelector((state) => state.player)
+  const { current, status, error } = useSelector((state) => state.album)
+  const { current: currentTrack, isPlaying } = useSelector((state) => state.player)
+  const likedIds = useSelector(selectLikedIds)
 
   useEffect(() => {
     if (albumId) dispatch(fetchAlbumById(albumId))
@@ -38,8 +41,9 @@ export default function AlbumPage() {
   const tracks = current?.id === albumId ? current.tracks : []
   const album = current?.id === albumId ? current.album : undefined
   const isLoading = status === 'idle' || status === 'loading'
+  const displayTracks = withLikes(tracks, likedIds)
 
-  const playAll = (index = 0) => dispatch(playQueue({ tracks, index }))
+  const playAll = (index = 0) => dispatch(playQueue({ tracks: displayTracks, index }))
 
   const totalSeconds = tracks.reduce((sum, track) => sum + (track.duration ?? 0), 0)
   const totalMinutes = Math.round(totalSeconds / 60)
@@ -54,7 +58,14 @@ export default function AlbumPage() {
 
   return (
     <div className="space-y-6">
-      {isLoading ? (
+      {status === 'failed' && !album ? (
+        <EmptyState
+          icon={RiDiscLine}
+          title="Couldn&apos;t load this album"
+          description={error ?? 'Something went wrong while loading this album.'}
+          className="py-16"
+        />
+      ) : isLoading ? (
         <>
           <Skeleton className="h-64 w-full rounded-3xl sm:h-72" />
           <SkeletonList count={8} />
@@ -90,7 +101,7 @@ export default function AlbumPage() {
             }
           />
 
-          {tracks.length > 0 ? (
+          {displayTracks.length > 0 ? (
             <div className="rounded-2xl border border-white/[0.06] bg-surface/40 p-2">
               <div className="hidden items-center gap-3 px-3 py-2 text-[11px] font-semibold tracking-widest text-ink-500 uppercase md:flex">
                 <span className="w-8 shrink-0 text-center">#</span>
@@ -101,15 +112,16 @@ export default function AlbumPage() {
                 </span>
               </div>
               <div className="divide-y divide-white/[0.04]">
-                {tracks.map((track, index) => (
+                {displayTracks.map((track, index) => (
                   <TrackRow
                     key={track.id}
                     index={index}
                     track={track}
                     playing={currentTrack?.id === track.id}
-                    onPlay={() => dispatch(playTrack({ track, queue: tracks }))}
-                    onSelect={() => dispatch(playTrack({ track, queue: tracks }))}
-                    onLike={() => {}}
+                    isPlaying={isPlaying}
+                    onPlay={() => dispatch(playTrack({ track, queue: displayTracks }))}
+                    onSelect={() => dispatch(playTrack({ track, queue: displayTracks }))}
+                    onLike={() => dispatch(toggleLike(track.id))}
                     onMore={() => {}}
                   />
                 ))}

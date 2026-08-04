@@ -19,6 +19,8 @@ import {
   playTrack,
   setShuffle,
 } from '../store/slices/playerSlice'
+import { toggleLike, selectLikedIds } from '../store/slices/likesSlice'
+import { withLikes } from '../utils/normalizers'
 
 /**
  * Artist profile — banner, popular tracks and discography, derived from the
@@ -29,7 +31,8 @@ export default function ArtistPage() {
   const navigate = useNavigate()
   const { artistId } = useParams()
   const { byId, status } = useSelector((state) => state.artist)
-  const { current: currentTrack } = useSelector((state) => state.player)
+  const { current: currentTrack, isPlaying } = useSelector((state) => state.player)
+  const likedIds = useSelector(selectLikedIds)
 
   useEffect(() => {
     if (artistId) dispatch(fetchArtist(artistId))
@@ -40,8 +43,9 @@ export default function ArtistPage() {
   const popularTracks = bundle?.tracks ?? []
   const albums = bundle?.albums ?? []
   const isLoading = status === 'idle' || status === 'loading' || !bundle
+  const displayTracks = withLikes(popularTracks, likedIds)
 
-  const playAll = (index = 0) => dispatch(playQueue({ tracks: popularTracks, index }))
+  const playAll = (index = 0) => dispatch(playQueue({ tracks: displayTracks, index }))
 
   return (
     <div className="space-y-10">
@@ -119,14 +123,16 @@ export default function ArtistPage() {
             <SectionHeader title="Popular" icon={RiUserStarLine} />
             <div className="rounded-2xl border border-white/[0.06] bg-surface/40 p-2">
               {popularTracks.length > 0 ? (
-                popularTracks.slice(0, 5).map((track, index) => (
+                displayTracks.slice(0, 5).map((track, index) => (
                   <TrackRow
                     key={track.id}
                     index={index}
                     track={track}
                     playing={currentTrack?.id === track.id}
-                    onPlay={() => dispatch(playTrack({ track, queue: popularTracks }))}
-                    onSelect={() => dispatch(playTrack({ track, queue: popularTracks }))}
+                    isPlaying={isPlaying}
+                    onPlay={() => dispatch(playTrack({ track, queue: displayTracks }))}
+                    onSelect={() => dispatch(playTrack({ track, queue: displayTracks }))}
+                    onLike={() => dispatch(toggleLike(track.id))}
                   />
                 ))
               ) : (
@@ -149,7 +155,7 @@ export default function ArtistPage() {
                   <AlbumCard
                     key={album.id}
                     album={album}
-                    onSelect={() => navigate(`/album/${album.id}`)}
+                    onSelect={() => navigate(`/home?album=${album.id}`)}
                   />
                 ))}
               </div>

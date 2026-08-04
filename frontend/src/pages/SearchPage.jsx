@@ -7,6 +7,8 @@ import AlbumCard from '../components/cards/AlbumCard'
 import SectionHeader from '../components/sections/SectionHeader'
 import EmptyState from '../components/ui/EmptyState'
 import { playTrack } from '../store/slices/playerSlice'
+import { toggleLike, selectLikedIds } from '../store/slices/likesSlice'
+import { withLikes } from '../utils/normalizers'
 
 /**
  * Client-side search across the loaded catalog (no search endpoint).
@@ -17,7 +19,8 @@ export default function SearchPage() {
   const [searchParams] = useSearchParams()
   const tracks = useSelector((state) => state.music.items)
   const albums = useSelector((state) => state.album.items)
-  const { current } = useSelector((state) => state.player)
+  const { current, isPlaying } = useSelector((state) => state.player)
+  const likedIds = useSelector(selectLikedIds)
 
   const query = (searchParams.get('q') ?? '').toLowerCase().trim()
 
@@ -40,6 +43,8 @@ export default function SearchPage() {
       ),
     [albums, query],
   )
+
+  const filteredTracksWithLikes = withLikes(filteredTracks, likedIds)
 
   const hasResults = filteredTracks.length > 0 || filteredAlbums.length > 0
 
@@ -82,7 +87,7 @@ export default function SearchPage() {
                   <AlbumCard
                     key={album.id}
                     album={album}
-                    onSelect={() => navigate(`/album/${album.id}`)}
+                    onSelect={() => navigate(`/home?album=${album.id}`)}
                   />
                 ))}
               </div>
@@ -93,18 +98,20 @@ export default function SearchPage() {
             <section>
               <SectionHeader title="Tracks" />
               <div className="rounded-2xl border border-white/[0.06] bg-surface/40 p-2">
-                {filteredTracks.map((track, index) => (
+                {filteredTracksWithLikes.map((track, index) => (
                   <TrackRow
                     key={track.id}
                     index={index}
                     track={track}
                     playing={current?.id === track.id}
+                    isPlaying={isPlaying}
                     onPlay={() =>
-                      dispatch(playTrack({ track, queue: filteredTracks }))
+                      dispatch(playTrack({ track, queue: filteredTracksWithLikes }))
                     }
                     onSelect={() =>
-                      dispatch(playTrack({ track, queue: filteredTracks }))
+                      dispatch(playTrack({ track, queue: filteredTracksWithLikes }))
                     }
+                    onLike={() => dispatch(toggleLike(track.id))}
                   />
                 ))}
               </div>

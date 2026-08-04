@@ -1,4 +1,4 @@
-import { RiPlayFill, RiMore2Fill } from 'react-icons/ri'
+import { RiPlayFill, RiPauseFill, RiMore2Fill } from 'react-icons/ri'
 import { cx } from '../../utils/cx'
 import { formatDuration } from '../../utils/format'
 import LikeButton from '../ui/LikeButton'
@@ -14,6 +14,7 @@ export default function TrackRow({
   index = 0,
   track,
   playing = false,
+  isPlaying = false,
   onPlay,
   onSelect,
   onLike,
@@ -47,7 +48,7 @@ export default function TrackRow({
         <span
           className={cx(
             'text-sm tabular-nums text-ink-500 transition-opacity duration-200',
-            onPlay && 'group-hover/row:opacity-0',
+            onPlay && !(playing && isPlaying) && 'group-hover/row:opacity-0',
             playing && 'text-accent-400',
           )}
         >
@@ -56,14 +57,32 @@ export default function TrackRow({
         {onPlay && (
           <button
             type="button"
-            aria-label={`Play ${track?.title ?? 'track'}`}
-            className="focus-ring absolute inset-0 flex items-center justify-center text-ink-0 opacity-0 transition-all duration-200 group-hover/row:opacity-100"
+            aria-label={
+              playing && isPlaying
+                ? `Pause ${track?.title ?? 'track'}`
+                : `Play ${track?.title ?? 'track'}`
+            }
+            title={
+              playing && isPlaying
+                ? `Pause ${track?.title ?? 'track'}`
+                : `Play ${track?.title ?? 'track'}`
+            }
+            className={cx(
+              'focus-ring absolute inset-0 flex items-center justify-center text-ink-0 transition-all duration-200',
+              playing && isPlaying
+                ? 'opacity-100'
+                : 'opacity-0 group-hover/row:opacity-100',
+            )}
             onClick={(event) => {
               event.stopPropagation()
               onPlay()
             }}
           >
-            <RiPlayFill aria-hidden="true" className="translate-x-[1px]" />
+            {playing && isPlaying ? (
+              <RiPauseFill aria-hidden="true" />
+            ) : (
+              <RiPlayFill aria-hidden="true" className="translate-x-[1px]" />
+            )}
           </button>
         )}
       </div>

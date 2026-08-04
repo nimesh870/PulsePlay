@@ -5,6 +5,7 @@ import AppLayout from '../components/layout/AppLayout'
 import HomePage from '../pages/HomePage'
 import SearchPage from '../pages/SearchPage'
 import LibraryPage from '../pages/LibraryPage'
+import LikedSongsPage from '../pages/LikedSongsPage'
 import AlbumPage from '../pages/AlbumPage'
 import ArtistPage from '../pages/ArtistPage'
 import LoginPage from '../pages/LoginPage'
@@ -24,6 +25,7 @@ export default function AppRoutes() {
           <Route path="/home" element={<HomePage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/library" element={<LibraryPage />} />
+          <Route path="/liked-songs" element={<LikedSongsPage />} />
           <Route path="/album/:albumId" element={<AlbumPage />} />
           <Route path="/artist/:artistId" element={<ArtistPage />} />
 

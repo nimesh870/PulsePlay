@@ -23,6 +23,10 @@ const playerSlice = createSlice({
     playTrack(state, action) {
       const { track, queue } = action.payload
       state.queue = queue ?? state.queue
+      if (state.current?.id === track.id) {
+        state.isPlaying = !state.isPlaying
+        return
+      }
       const index = state.queue.findIndex((item) => item.id === track.id)
       state.currentIndex = index >= 0 ? index : 0
       state.current = state.queue[state.currentIndex] ?? null

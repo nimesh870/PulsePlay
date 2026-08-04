@@ -49,3 +49,12 @@ export function normalizeUser(user) {
     avatarUrl: undefined,
   }
 }
+
+/**
+ * Merge a liked-ids list into a set of tracks so UI cards/rows show the
+ * correct heart state without mutating the stored track objects.
+ */
+export function withLikes(tracks, likedIds) {
+  const set = new Set(likedIds)
+  return tracks.map((track) => ({ ...track, liked: set.has(track.id) }))
+}

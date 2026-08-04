@@ -32,6 +32,8 @@ export default function GlobalAudio() {
       if (isPlaying) {
         const playPromise = audio.play()
         if (playPromise) playPromise.catch(() => dispatch(togglePlay()))
+      } else {
+        audio.pause()
       }
     } else if (isPlaying) {
       dispatch(togglePlay())
@@ -52,10 +54,10 @@ export default function GlobalAudio() {
 
   useEffect(() => {
     const audio = audioRef.current
-    if (audio && Math.abs(audio.currentTime - currentTime) > 0.5) {
+    if (audio && !isPlaying && Math.abs(audio.currentTime - currentTime) > 0.5) {
       audio.currentTime = currentTime
     }
-  }, [currentTime])
+  }, [currentTime, isPlaying])
 
   return (
     <audio
