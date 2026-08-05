@@ -11,7 +11,10 @@ const app = express();
 
 // CORS
 app.use(cors({
-    origin: "https://pulse-play-nimesh-dulals-projects.vercel.app",
+      origin: [
+        "https://pulse-play-nimesh-dulals-projects.vercel.app",
+        "https://pulse-play-tawny.vercel.app"
+    ],
     credentials: true
 }));
 
