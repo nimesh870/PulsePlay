@@ -2,7 +2,6 @@ import { apiClient } from '../api'
 
 export const authService = {
   login: (payload) => {
-    console.log('Login payload:', payload)
     return apiClient
       .post('/api/auth/login', payload, {
         headers: { 'Content-Type': 'application/json' },
