@@ -17,7 +17,7 @@ const authSchema = new Mongoose.Schema({
     password : {
         type : String,
         required : true,
-        minlength : [6 , "password must contain atleast 6 characters."]
+        minlength : [8 , "password must contain atleast 8 characters."]
     },
 
     role : {
